@@ -9,6 +9,12 @@
  * @since Twenty Twenty 1.0
  */
 
+use WordPlate\Acf\Fields\Image;
+use WordPlate\Acf\Fields\Select;
+use WordPlate\Acf\Fields\Text;
+use WordPlate\Acf\Fields\TrueFalse;
+use WordPlate\Acf\Location;
+
 /**
  * Table of Contents:
  * Theme Support
@@ -759,4 +765,29 @@ function twentytwenty_get_elements_array() {
 	return apply_filters( 'twentytwenty_get_elements_array', $elements );
 }
 
+$my_true_false = TrueFalse::make('Test', 'test')
+    ->instructions('Are you a good person?')
+    ->stylisedUi();
+
+register_extended_field_group([
+    'title' => 'My beautiful test',
+    'fields' => [
+        Select::make('Color', 'color')
+            ->instructions('Select the background color.')
+            ->choices([
+                    'default' => 'Faire un choix',
+                    'cyan' => 'Cyan',
+                    'hotpink' => 'Hotpink',
+            ])
+            ->defaultValue('default')
+            ->returnFormat('value') // value, label or array
+            ->required(),
+        Text::make('Title')->conditionalLogic([
+                \WordPlate\Acf\ConditionalLogic::if('color')->equals('cyan')
+        ])
+    ],
+    'location' => [
+        Location::if('post_type', 'page')
+    ],
+]);
 
