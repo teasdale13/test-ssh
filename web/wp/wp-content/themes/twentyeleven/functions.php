@@ -41,6 +41,12 @@
  */
 
 // Set the content width based on the theme's design and stylesheet.
+use WordPlate\Acf\ConditionalLogic;
+use WordPlate\Acf\Fields\Select;
+use WordPlate\Acf\Fields\Text;
+use WordPlate\Acf\Fields\TrueFalse;
+use WordPlate\Acf\Location;
+
 if ( ! isset( $content_width ) ) {
 	$content_width = 584;
 }
@@ -925,3 +931,40 @@ function twentyeleven_skip_link() {
 	}
 }
 add_action( 'wp_body_open', 'twentyeleven_skip_link', 5 );
+
+
+$condition = ConditionalLogic::if('color')->equals('cyan');
+
+$my_true_false = TrueFalse::make('Test', 'test')
+    ->instructions('Are you a good person?')
+    ->stylisedUi();
+
+register_extended_field_group([
+    'title' => 'Accueil - Test',
+    'fields' => [
+        $my_true_false,
+        Select::make('Color', 'color')
+            ->instructions('Select the background color.')
+            ->choices([
+                'default' => 'Faire un choix',
+                'cyan' => 'Cyan',
+                'hotpink' => 'Hotpink',
+            ])
+            ->defaultValue('default')
+            ->conditionalLogic([
+                ConditionalLogic::if('test')->equals(1)
+            ])
+            ->returnFormat('value') // value, label or array
+            ->required(),
+        Text::make('Title')->conditionalLogic([
+            $condition
+        ])
+    ],
+    'location' => [
+        Location::if('post_type', 'post')
+    ],
+    'hide_on_screen' => ['the_content']
+
+]);
+
+

@@ -9,10 +9,12 @@
  * @since Twenty Twenty 1.0
  */
 
+use WordPlate\Acf\ConditionalLogic;
 use WordPlate\Acf\Fields\Image;
 use WordPlate\Acf\Fields\Select;
 use WordPlate\Acf\Fields\Text;
 use WordPlate\Acf\Fields\TrueFalse;
+use WordPlate\Acf\Fields\Wysiwyg;
 use WordPlate\Acf\Location;
 
 /**
@@ -765,29 +767,72 @@ function twentytwenty_get_elements_array() {
 	return apply_filters( 'twentytwenty_get_elements_array', $elements );
 }
 
+add_filter( 'acf/fields/wysiwyg/toolbars' , 'my_toolbars'  );
+function my_toolbars( $toolbars )
+{
+    // Add a new toolbar called "Very Simple"
+    // - this toolbar has only 1 row of buttons
+    $toolbars['Very Simple' ] = array();
+    $toolbars['Very Simple' ][1] = array('bold' , 'italic' , 'underline' );
+
+    // return $toolbars - IMPORTANT!
+    return $toolbars;
+}
+
+$condition = ConditionalLogic::if('color')->equals('cyan');
+
 $my_true_false = TrueFalse::make('Test', 'test')
     ->instructions('Are you a good person?')
     ->stylisedUi();
 
 register_extended_field_group([
-    'title' => 'My beautiful test',
+    'title' => 'Accueil - Test',
     'fields' => [
-        Select::make('Color', 'color')
-            ->instructions('Select the background color.')
-            ->choices([
-                    'default' => 'Faire un choix',
-                    'cyan' => 'Cyan',
-                    'hotpink' => 'Hotpink',
-            ])
-            ->defaultValue('default')
-            ->returnFormat('value') // value, label or array
-            ->required(),
-        Text::make('Title')->conditionalLogic([
-                \WordPlate\Acf\ConditionalLogic::if('color')->equals('cyan')
-        ])
+
+            $my_true_false,
+            Select::make('Color', 'color')
+                ->instructions('Select the background color.')
+                ->choices([
+                        'default' => 'Faire un choix',
+                        'cyan' => 'Cyan',
+                        'hotpink' => 'Hotpink',
+                        'red' => 'Red'
+                ])
+                ->defaultValue('default')
+                ->conditionalLogic([
+                        ConditionalLogic::if('test')->equals(1)
+                ])
+                ->returnFormat('value') // value, label or array
+                ->required(),
+            Text::make('Title')->conditionalLogic([
+                    $condition
+            ]),
+            Wysiwyg::make('Texte', 'text')
+                ->toolbar('Very Simple')
+                ->mediaUpload(false)->conditionalLogic([
+                        ConditionalLogic::if('color')->equals('Hotpink')
+                ])->required(),
+            Image::make('Image', 'image')->width(1980)->height(1080)
+                ->required()->wrapper(['width' => '50' ])->conditionalLogic([
+                        ConditionalLogic::if('color')->equals('Red')
+                ])
     ],
     'location' => [
-        Location::if('post_type', 'page')
+        Location::if('post_type', '==', 'page')
     ],
+    'style' => 'default',
+    'hide_on_screen' => [
+        'the_content',
+        'author',
+        'categories',
+        'featured_image',
+        'excerpt',
+        'discussion',
+        'page_attributes',
+        'comments',
+        'tags',
+        'slug'
+    ]
+
 ]);
 
